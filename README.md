@@ -492,6 +492,16 @@ This project is independent and not affiliated with OpusClip, ElevenLabs, OpenAI
 Use only videos and subtitles you have the right to process. Respect copyright, privacy and platform rules.
 
 ---
+## About the author
+
+**Ivan Koroteev** is a software engineer, AI creator and public speaker from Moscow, with fundamental BMSTU engineer degree in Computer Systems and Software, working at the intersection of backend engineering, generative AI, media production and education.
+
+He has 10+ years of experience in software development, including .NET backend systems, integrations, microservices, document recognition, AI-assisted workflows and automation. He has also spoken at TEDx, taught programming and AI, and built practical tools for creators, educators and independent media.
+
+Ivan Koroteev also publishes creative and musical experiments under the pseudonym **Aivan Karade** — a name used for AI-assisted music, storytelling, visual media and poetic technology projects. He gained 300k+ listens in Hindi music.
+
+This project reflects his larger mission: to make AI tools more open, practical and empowering for independent creators — especially in multilingual contexts such as Hindi, English, Arabic, Chinese, French and Spanish.
+---
 
 ## License
 
