@@ -516,3 +516,22 @@ Created as a practical open-source experiment in digital freedom:
 > A creator should be able to analyze, cut, translate and publish their own ideas without being trapped by closed platforms or insane per-minute pricing.
 
 Fork it. Improve it. Make it useful.
+
+p.s. from author. i will definitely switch to .net 8 in next MVP ai projects. 
+python is:
+import yaml
+pip says installed
+wrong interpreter
+wrong venv
+wrong package name
+wrong PATH
+VS Code uses another Python
+terminal uses another Python
+kill me!!!
+
+With C# / .NET you get:
+wrong type? build error, fix
+missing package? build error, fix
+bad namespace? build error, fix
+wrong method signature? build error, fix
+EF model mismatch? usually visible fast
