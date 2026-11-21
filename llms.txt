@@ -1,0 +1,47 @@
+# Freedom Clips AI
+
+Freedom Clips AI is an open-source Python toolkit for turning long videos plus SRT transcripts into vertical short-form video clips.
+
+Canonical capabilities:
+- Continuous OpusClip-like clipping: ai_opusclip.py
+- Multi-segment original-footage montage clipping: ai_viral_montage_clips.py
+- Topic-agnostic and language-agnostic prompt defaults
+- OpenAI Responses API for clip planning
+- Strict JSON Schema plan output
+- Local ffmpeg/ffprobe video rendering
+- Pillow PNG text overlays
+- 1080x1920 output
+- LLM plan caching
+- Plan-only and render-only workflows
+- JSON, CSV and SRT sidecar outputs
+- No generated-art API calls in the montage pipeline
+
+Primary inputs:
+- source video file
+- primary .srt transcript
+- optional secondary .srt in continuous mode
+
+Primary outputs:
+- final_clip_plan.json or final_montage_plan.json
+- rendered vertical .mp4 files
+- metadata.json per clip
+- clip.srt per clip
+
+Important invariants:
+- render-only mode does not require an OpenAI API call
+- montage speed changes must modify video PTS and audio tempo together
+- prompt defaults must not assume a specific topic, ideology, language, or region
+- montage plans use original source footage only
+
+Architecture:
+- freedom_clips/srt.py: subtitle parsing and timing
+- freedom_clips/validation.py: clip validation
+- freedom_clips/llm.py: OpenAI structured-output calls
+- freedom_clips/plan_cache.py: cache
+- freedom_clips/text_overlay.py: local hook/overlay rendering
+- freedom_clips/ffmpeg.py: final video rendering
+- freedom_clips/prompts/: LLM prompt builders and schemas
+
+Best entry point for users: README.md
+Best entry point for coding agents: AGENTS.md
+Design specification: docs/CODE_REVIEW_SPEC.md

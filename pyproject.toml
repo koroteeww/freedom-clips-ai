@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "freedom-clips-ai"
+version = "0.2.0"
+description = "Open-source OpusClip-style long-video to Shorts/Reels/TikTok generator using OpenAI, SRT, Pillow and ffmpeg."
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+authors = [{name = "Ivan Koroteev"}]
+keywords = [
+  "opusclip alternative",
+  "ai video editor",
+  "youtube shorts",
+  "instagram reels",
+  "tiktok",
+  "ffmpeg",
+  "openai",
+  "srt",
+  "podcast clips",
+  "video automation",
+]
+dependencies = [
+  "openai>=3.10.0,<4",
+  "Pillow>=10,<14",
+]
+
+[project.optional-dependencies]
+dub = [
+  "websocket-client>=1.7.0",
+]
+
+[project.scripts]
+freedom-opusclip = "ai_opusclip:main"
+freedom-montage = "ai_viral_montage_clips:main"
+
+[tool.setuptools]
+py-modules = ["ai_opusclip", "ai_viral_montage_clips"]
+
+[tool.setuptools.packages.find]
+include = ["freedom_clips*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra"

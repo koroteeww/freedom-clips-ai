@@ -1,0 +1,31 @@
+1
+00:00:00,000 --> 00:00:05,000
+This is a sample transcript for offline plan testing.
+
+2
+00:00:05,000 --> 00:00:10,000
+The real project works with any subject and does not assume a particular topic.
+
+3
+00:00:10,000 --> 00:00:15,000
+Clip planning is separated from local video rendering.
+
+4
+00:00:15,000 --> 00:00:20,000
+That means you can inspect the plan before spending time on encoding.
+
+5
+00:00:20,000 --> 00:00:25,000
+You can also render the same plan again without another model request.
+
+6
+00:00:25,000 --> 00:00:30,000
+Montage clips use source footage and ordinary text overlays.
+
+7
+00:00:30,000 --> 00:00:35,000
+Timing validation keeps audio video and subtitles aligned.
+
+8
+00:00:35,000 --> 00:00:40,000
+This sample is intentionally generic so it can be reused in tests and examples.
