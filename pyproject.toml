@@ -35,9 +35,10 @@ dub = [
 [project.scripts]
 freedom-opusclip = "ai_opusclip:main"
 freedom-montage = "ai_viral_montage_clips:main"
+freedom-dub-align = "dub_align_video:main"
 
 [tool.setuptools]
-py-modules = ["ai_opusclip", "ai_viral_montage_clips"]
+py-modules = ["ai_opusclip", "ai_viral_montage_clips", "dub_align_video"]
 
 [tool.setuptools.packages.find]
 include = ["freedom_clips*"]

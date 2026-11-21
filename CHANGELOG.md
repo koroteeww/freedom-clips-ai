@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Added `dub_align_video.py` and `freedom_clips/dub_align.py`: the dub drives the video timeline. Pauses are used first, then the dub is sped up and/or the video slowed within limits. Each video slice is measured after rendering and the audio cut to match, so A/V stays sample-accurate. The background audio is time-warped too, and the subtitles are re-timed.
 - Merged the 0.2.0 package refactor into the GitHub repository.
 - Removed `noimg.py` and `ai_montage_clips.py`; `ai_viral_montage_clips.py` replaces both (original footage only).
 - Kept the dubbing/transcription tools (`realtime_dub_mp4.py`, `transcribe_ru_diarized_srt_openai.py`, `tretyakov_translate_tts_kdenlive.py`, `build_exact_dub_mp3_from_manifest.py`) unchanged.

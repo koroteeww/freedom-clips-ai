@@ -557,6 +557,31 @@ python transcribe_ru_diarized_srt_openai.py --input talk.mp4 --outdir talk_asr -
 
 Run each script with `--help` to see all of its options. `realtime_dub_mp4.py` needs `websocket-client`, which is included in `requirements.txt`.
 
+### Putting a dub onto the video: `dub_align_video.py`
+
+Translated speech rarely matches the original length. `dub_align_video.py` places every dubbed line where the original line started. If a line doesn't fit, it fixes the timing without A/V drift:
+
+1. **Use the pause first.** A line may run into the silence before the next line.
+2. **Then share the overrun** between speeding the dub up (`atempo`, default max ×1.35) and slowing that video slice down (`setpts`, default max ×1.6). `--mode audio`, `--mode video` or `--mode none` use only one strategy, or none.
+3. **Render, measure, then cut the audio.** Each video slice is rendered first and its real length measured with ffprobe. The audio is then cut to that exact number of samples, so small ffmpeg errors never add up. A 3-minute test with 60 lines and 89 slices ends with less than 1 ms difference between the audio and video tracks.
+4. **Short dubs are padded with silence, never stretched.** Anything that still doesn't fit within the limits is trimmed with a short fade and listed in the report.
+
+```bash
+# tts_manifest.json from tretyakov_translate_tts_kdenlive.py works as is
+python dub_align_video.py --video talk.mp4 --manifest talk_dub/tts_manifest.json
+
+# or: original SRT + one file per cue (0001_*.mp3, 0002_*.mp3, ...) + translated SRT for subtitles
+python dub_align_video.py --video talk.mp4 --srt talk.srt --dub-dir tts/ --text-srt talk.en.srt
+
+# keep the original sound (or a separated music track) quietly under the dub
+python dub_align_video.py --video talk.mp4 --manifest m.json --background original --background-volume 0.15
+
+# see what it would do, without rendering
+python dub_align_video.py --video talk.mp4 --manifest m.json --plan-only
+```
+
+Outputs: `<name>_dubbed.mp4`, `<name>_dubbed.aligned.srt` (subtitles re-timed to the new video timeline) and `<name>_dubbed.alignment.json` (per-line decisions and a summary). No paid API calls; everything runs in ffmpeg.
+
 ### Generating an SRT first
 
 If you have no transcript yet, `run_ai_opusclip_simple.py` transcribes the video with Whisper, reuses an existing usable SRT, runs `ai_opusclip.py`, and can burn subtitles into the rendered clips:
