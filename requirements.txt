@@ -1,2 +1,4 @@
-openai>=1.0.0
+openai>=3.10.0,<4
+Pillow>=10,<14
+# Only needed for realtime_dub_mp4.py
 websocket-client>=1.7.0

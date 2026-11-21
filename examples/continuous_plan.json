@@ -1,0 +1,20 @@
+{
+  "analysis": {
+    "topic": "Example workflow",
+    "source_language": "English",
+    "audience": "Developers and creators",
+    "editorial_style": "Clear and practical"
+  },
+  "clips": [
+    {
+      "rank": 1,
+      "start_sec": 0.0,
+      "end_sec": 40.0,
+      "viral_score": 82,
+      "title": "Plan once, render again",
+      "hook_text": "Stop paying twice for the same edit",
+      "caption": "A local-first short-form video workflow.",
+      "why_selected": "The range explains the main workflow as a standalone idea."
+    }
+  ]
+}

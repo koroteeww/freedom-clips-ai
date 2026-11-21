@@ -1,186 +1,148 @@
-# Freedom Clips AI — Open Source OpusClip & ElevenLabs Alternative for Hindi, Shorts, Reels and TikTok
+# Freedom Clips AI — Open-Source OpusClip Alternative in Python
 
-**Freedom Clips AI** is a lightweight Python MVP for creators who want an open, scriptable alternative to expensive AI video tools.
+**Freedom Clips AI** turns long videos, podcasts, interviews, lectures, speeches, webinars, and conference recordings into vertical short-form clips using **Python, OpenAI, SRT subtitles, Pillow, and ffmpeg**.
 
-It helps you turn a long speech, podcast, interview, or lecture into:
+It is a lightweight, inspectable alternative to closed video clipping SaaS products. The clip-selection logic is **topic-agnostic and language-agnostic by default**: the model infers the subject, language, audience, and editorial tone from the supplied transcript.
 
-- **viral vertical clips** like OpusClip
-- **montage clips** made from 5–10 second moments across the whole video
-- **AI dubbing / translation videos** using OpenAI Realtime Translation
-- **Hindi-first short-form content** for YouTube Shorts, Instagram Reels and TikTok
+> Long video + SRT → AI clip plan → local ffmpeg rendering → Shorts / Reels / TikTok-ready MP4 files.
 
-This project was created in the spirit of **digital freedom**, inspired by Pavel Durov’s message about personal sovereignty, privacy and independence from centralized platforms.
+## TL;DR
 
-The goal is simple:
+- Open-source OpusClip-style workflow.
+- Creates **continuous viral clips** or **multi-segment montage clips**.
+- Works with English, Russian, Hindi, Arabic, Chinese, and other Unicode-language SRT files.
+- Uses the OpenAI Responses API for clip planning.
+- Uses **original footage only** for montage rendering.
+- Does **not** call an image-generation API.
+- Caches LLM plans so re-rendering does not spend API money again.
+- Supports `--plan-only` and offline `--render-only --plan ...` workflows.
+- Produces MP4, JSON metadata, CSV plans, and sidecar SRT subtitles.
+- Runs on Windows, Linux, and macOS when Python and ffmpeg are available.
 
-> Give creators, educators and independent media people a cheap, hackable, open-source workflow instead of paying huge SaaS fees for every minute of video.
+## What problem does this solve?
 
----
+Creators often need to convert a 20–120 minute source video into multiple vertical clips. Commercial AI clipping tools can be convenient, but they are usually closed, difficult to automate, and priced per minute or per generated asset.
 
-## Why this exists
+Freedom Clips AI keeps the expensive part small:
 
-Many AI creator tools are powerful, but they become expensive very quickly.
+1. subtitles are parsed locally;
+2. the LLM selects or arranges the strongest source moments;
+3. the plan is cached;
+4. all video rendering, cropping, pacing, overlays, concatenation, and encoding happen locally with ffmpeg.
 
-- OpusClip-style tools are often closed SaaS products.
-- ElevenLabs-style dubbing can become expensive for long videos.
-- Hindi and multilingual workflows are often weak or missing.
-- Creators cannot easily inspect, modify or automate the pipeline.
+The project is useful for:
 
-**Freedom Clips AI** gives you a Python-first workflow using only:
+- podcast to Shorts automation;
+- interview clip generation;
+- lecture and course highlights;
+- conference speaker clips;
+- founder and expert content;
+- multilingual social video workflows;
+- YouTube Shorts generation from SRT;
+- TikTok and Instagram Reels generation;
+- open-source AI video editing experiments;
+- automated content pipelines and agentic media workflows.
 
-- `ffmpeg`
-- OpenAI API
-- SRT subtitles
-- simple local folders
-- no video editor required
+## Two clip modes
 
-It is not a polished SaaS. It is an MVP you can fork, modify and build on.
+### 1. Continuous clips — `ai_opusclip.py`
 
----
+This mode behaves like a simple open-source OpusClip alternative.
 
-## Main use cases
+The LLM selects contiguous timestamp ranges from the source transcript. The program then snaps candidate ranges to natural subtitle boundaries, rejects excessive overlap, adds a short on-screen hook, converts the video to 1080×1920, and renders each clip locally.
 
-### 1. Open Source OpusClip Alternative
-
-Use `ai_opusclip.py` to analyze a long video transcript and generate 10–20 short vertical clips.
-
-Input:
-
-```text
-input.mp4
-en.srt
-hi.srt
-```
-
-Output:
-
-```text
-clips_durov/
-  01_95_Digital_Freedom/
-    01_95_Digital_Freedom.mp4
-    metadata.json
-  final_clip_plan.csv
-  final_clip_plan.json
-```
-
-The script asks OpenAI to score possible clips for:
-
-- hook strength
-- emotional tension
-- standalone clarity
-- novelty
-- quotability
-- Shorts/Reels/TikTok potential
-
-It then uses ffmpeg to create vertical clips.
-
----
-
-### 2. AI Montage Clip Generator
-
-Use `ai_montage_clips.py` to create viral montage clips from different parts of the speech.
-
-Instead of one continuous 30–90 second clip, each final video is made from several short 5–10 second moments.
-
-Example:
+Typical use case:
 
 ```text
-montage_01.mp4
-  segment 1: 00:02:14–00:02:22
-  segment 2: 00:08:41–00:08:49
-  segment 3: 00:17:10–00:17:18
-  segment 4: 00:24:02–00:24:11
+60-minute podcast
+        ↓
+5–12 strong continuous excerpts
+        ↓
+30–90 second vertical clips
 ```
 
-This is useful for:
+### 2. Montage clips — `ai_viral_montage_clips.py`
 
-- motivational edits
-- digital freedom manifestos
-- “best ideas from this speech”
-- guru-style short clips
-- idea compilations
+This mode creates faster short-form edits from multiple semantic units of the same source video.
 
----
-
-### 3. OpenAI Realtime Dubbing Alternative to ElevenLabs
-
-Use `realtime_dub_mp4.py` to translate and dub MP4 video into other languages using OpenAI Realtime Translation.
-
-Supported target examples:
-
-- Arabic
-- Hindi
-- Chinese
-- French
-- Spanish
-
-The workflow:
+Typical use case:
 
 ```text
-MP4 video
-→ extract 24 kHz mono PCM16 audio with ffmpeg
-→ stream audio to OpenAI Realtime Translation
-→ receive translated speech audio
-→ mux translated audio back into MP4
+long interview
+   ↓
+3–6 selected source beats
+   ↓
+15–25 second montage
 ```
 
-This is not voice cloning. It is a cheap translation/dubbing workflow.
+Montage mode can remain chronological or intentionally reorder source beats. Every output plan records original source unit IDs and an `integrity_risk` score.
 
-For local voice cloning, you can experiment with pyVideoTrans, XTTS-v2, F5-TTS, CosyVoice or clone-voice separately.
+**Important:** montage generation uses the original source video plus local text overlays. There is no generated-art pipeline and no image-generation API cost.
 
----
+## Repository facts for humans and agents
 
-## SEO / AEO keywords
+| Question | Answer |
+|---|---|
+| Primary purpose | Convert long-form video + SRT into vertical short-form clips |
+| Main language | Python 3.10+ |
+| Video engine | ffmpeg / ffprobe |
+| LLM API | OpenAI Responses API |
+| Default planning model | `gpt-5.6-luna` |
+| Image generation | None |
+| Input transcription | Existing `.srt` file |
+| Continuous clip script | `ai_opusclip.py` |
+| Montage clip script | `ai_viral_montage_clips.py` |
+| Shared package | `freedom_clips/` |
+| Plan cache | `.cache/plans/` |
+| Automated tests | `pytest` |
+| Output aspect ratio | 1080×1920 |
+| License | MIT |
 
-This project is relevant for:
-
-- OpusClip alternative
-- open source OpusClip alternative
-- free OpusClip alternative
-- AI Shorts generator
-- YouTube Shorts generator from SRT
-- TikTok clip generator
-- Instagram Reels generator
-- Hindi Shorts generator
-- Hindi subtitle video generator
-- AI viral clip generator
-- podcast to shorts Python
-- ffmpeg shorts generator
-- ElevenLabs alternative
-- open source ElevenLabs alternative
-- AI dubbing Python
-- OpenAI Realtime dubbing
-- OpenAI translation video
-- Pavel Durov digital freedom speech clips
-
----
-
-## Features
-
-- Analyze long SRT transcripts with OpenAI
-- Select viral 30–90 second clips
-- Select montage clips from different timestamps
-- Burn Hindi hooks into the top part of vertical videos
-- Export metadata JSON and CSV
-- Create `1080x1920` vertical videos
-- Support center-crop or blurred-background layout
-- Work with videos that already have hardcoded subtitles
-- Dub videos into multiple languages through OpenAI Realtime Translation
-- Simple scripts, no database, no web server
-
----
+For machine-oriented project context, see [`llms.txt`](llms.txt) and [`AGENTS.md`](AGENTS.md).
 
 ## Requirements
 
-- Python 3.10+
-- ffmpeg and ffprobe in PATH
-- OpenAI API key
-- Existing SRT files
+- Python **3.10 or newer**
+- `ffmpeg` and `ffprobe` available in `PATH`
+- an OpenAI API key for planning new clips
+- an SRT transcript that corresponds to the source video
 
-Install Python dependencies:
+You **do not need an API key to render an existing plan**.
+
+## Installation
+
+Clone the repository and create a virtual environment:
+
+```bash
+git clone https://github.com/YOUR_USERNAME/freedom-clips-ai.git
+cd freedom-clips-ai
+python -m venv .venv
+```
+
+Activate it.
+
+Windows PowerShell:
+
+```powershell
+.\.venv\Scripts\Activate.ps1
+```
+
+Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+For development and tests:
+
+```bash
+pip install -r requirements-dev.txt
 ```
 
 Check ffmpeg:
@@ -190,18 +152,12 @@ ffmpeg -version
 ffprobe -version
 ```
 
-Set your OpenAI key.
+Set your API key when you want to create a new plan.
 
 Windows PowerShell:
 
 ```powershell
 $env:OPENAI_API_KEY="sk-..."
-```
-
-Windows CMD:
-
-```bat
-set OPENAI_API_KEY=sk-...
 ```
 
 Linux/macOS:
@@ -210,328 +166,430 @@ Linux/macOS:
 export OPENAI_API_KEY="sk-..."
 ```
 
----
+## Quick start: continuous clips
 
-## Recommended input structure
+Input files:
 
 ```text
-project/
-  input.mp4
-  en.srt
-  hi.srt
-  ai_opusclip.py
-  ai_montage_clips.py
-  realtime_dub_mp4.py
+interview.mp4
+interview.srt
 ```
 
-For the original use case:
-
-- the speech was in Hindi
-- `en.srt` was used for analysis
-- `hi.srt` was used for Hindi hooks and context
-- the original video already had hardcoded Hindi subtitles
-
----
-
-## Usage: generate normal viral clips
-
-Dry run first:
+Plan and render:
 
 ```bash
 python ai_opusclip.py \
-  --video input.mp4 \
-  --en en.srt \
-  --hi hi.srt \
-  --out clips_durov \
-  --min-clips 10 \
-  --max-clips 20 \
-  --dry-run
+  --video interview.mp4 \
+  --srt interview.srt \
+  --out clips
 ```
 
-Render clips:
+Plan first without encoding video:
 
 ```bash
 python ai_opusclip.py \
-  --video input.mp4 \
-  --en en.srt \
-  --hi hi.srt \
-  --out clips_durov \
-  --min-clips 10 \
-  --max-clips 20 \
-  --layout crop
+  --video interview.mp4 \
+  --srt interview.srt \
+  --out clips \
+  --plan-only
 ```
 
-If your hardcoded subtitles are cut off by center crop, use blurred background layout:
+Then render later without another LLM call:
 
 ```bash
 python ai_opusclip.py \
-  --video input.mp4 \
-  --en en.srt \
-  --hi hi.srt \
-  --out clips_durov \
-  --layout blur
+  --video interview.mp4 \
+  --srt interview.srt \
+  --out clips_rendered \
+  --plan clips/final_clip_plan.json \
+  --render-only
 ```
 
----
-
-## Usage: generate montage clips
-
-Dry run:
+## Quick start: montage clips
 
 ```bash
-python ai_montage_clips.py \
-  --video input.mp4 \
-  --en en.srt \
-  --hi hi.srt \
-  --out montage_durov \
-  --max-montages 5 \
-  --dry-run
+python ai_viral_montage_clips.py \
+  --video interview.mp4 \
+  --srt interview.srt \
+  --out montage_clips \
+  --n-clips 3
 ```
 
-Render:
+Default mode preserves source order:
 
 ```bash
-python ai_montage_clips.py \
-  --video input.mp4 \
-  --en en.srt \
-  --hi hi.srt \
-  --out montage_durov \
-  --max-montages 5 \
-  --layout crop
+--edit-mode chronological
 ```
 
-Blur layout:
+Allow deliberate montage reordering:
 
 ```bash
-python ai_montage_clips.py \
-  --video input.mp4 \
-  --en en.srt \
-  --hi hi.srt \
-  --out montage_durov \
-  --max-montages 5 \
-  --layout blur
+python ai_viral_montage_clips.py \
+  --video interview.mp4 \
+  --srt interview.srt \
+  --out montage_clips \
+  --n-clips 3 \
+  --edit-mode montage
 ```
 
----
+## Multilingual workflow
 
-## Usage: dub MP4 into other languages
+The primary SRT can be in any language supported by the selected model and local font stack.
 
-All languages:
+You can optionally provide a secondary SRT for additional multilingual context:
 
 ```bash
-python realtime_dub_mp4.py input.mp4
+python ai_opusclip.py \
+  --video interview.mp4 \
+  --srt transcript_en.srt \
+  --secondary-srt transcript_hi.srt \
+  --hook-language hi \
+  --out clips
 ```
 
-Spanish only:
+Secondary subtitles are aligned by timestamp overlap rather than by assuming both files have identical cue indexes.
+
+Hook defaults:
+
+```text
+--source-language auto
+--hook-language same
+--editorial-style auto
+```
+
+Examples of explicit overrides:
+
+```bash
+--source-language ru
+--hook-language en
+--editorial-style "professional, concise, B2B"
+--content-context "Audience: software founders and engineering leaders"
+```
+
+## Continuous clip CLI options
+
+```text
+--video PATH                 Source MP4/video file
+--srt PATH                   Primary SRT transcript
+--secondary-srt PATH         Optional second SRT
+--out PATH                   Output directory
+--model MODEL                OpenAI model ID
+--min-clips N                Minimum LLM candidates
+--max-clips N                Maximum final clips
+--min-sec N                  Minimum clip duration
+--max-sec N                  Maximum clip duration
+--max-overlap-sec N          Allowed overlap between selected clips; default 0
+--source-language VALUE      auto or explicit language
+--hook-language VALUE        same or explicit language
+--editorial-style VALUE      auto or custom style
+--content-context TEXT       Optional creator/audience context
+--layout crop|blur           Vertical composition
+--plan-only                  Plan and validate only
+--render-only                Render only; requires --plan
+--plan PATH                  Existing JSON plan
+--refresh-plan               Ignore plan cache and call the LLM again
+--cache-dir PATH             LLM plan cache directory
+--font-path PATH             Explicit local font file
+--crf N                      H.264 quality setting
+--preset VALUE               ffmpeg encoder preset
+--verbose-ffmpeg             Print ffmpeg commands and stderr
+```
+
+## Montage clip CLI options
+
+```text
+--video PATH                 Source video
+--srt PATH                   SRT transcript
+--out PATH                   Output directory
+--n-clips N                  Number of montage plans
+--model MODEL                OpenAI model ID
+--min-unit-sec N             Minimum semantic subtitle unit size
+--max-unit-sec N             Maximum semantic subtitle unit size
+--min-clip-sec N             Minimum montage duration
+--max-clip-sec N             Maximum montage duration
+--edit-mode chronological    Preserve source order
+--edit-mode montage          Permit source-beat reordering
+--content-context TEXT       Optional context for the planner
+--layout crop|blur           Vertical composition
+--plan-only                  Create plan only
+--render-only --plan PATH    Render an existing plan with no LLM call
+--refresh-plan               Bypass cached plan
+```
+
+Backward-friendly aliases are accepted for the old montage input names:
+
+```text
+--input-mp4
+--input_mp4
+--outdir
+--n_clips
+```
+
+## Output structure
+
+Continuous mode:
+
+```text
+clips/
+├── transcript_for_planning.txt
+├── raw_plan.json
+├── final_clip_plan.json
+├── final_clip_plan.csv
+├── rendered_files.txt
+├── 01_093_example_title/
+│   ├── 01_example_title.mp4
+│   ├── clip.srt
+│   ├── hook.png
+│   └── metadata.json
+└── ...
+```
+
+Montage mode:
+
+```text
+montage_clips/
+├── merged_units.json
+├── raw_plan.json
+├── final_montage_plan.json
+├── manifest.json
+├── 01_094_example_title/
+│   ├── 01_example_title.mp4
+│   ├── clip.srt
+│   ├── metadata.json
+│   └── overlays/
+│       ├── hook.png
+│       ├── beat_01.png
+│       └── cta.png
+└── ...
+```
+
+## Cost controls
+
+Freedom Clips AI is designed so repeated editing does not repeatedly call an LLM.
+
+### Plan cache
+
+A plan fingerprint includes:
+
+- transcript or semantic units;
+- prompt version;
+- model;
+- clip-count and duration settings;
+- language/style/context settings.
+
+Cached plans are stored under:
+
+```text
+.cache/plans/
+```
+
+Use:
+
+```bash
+--refresh-plan
+```
+
+only when you intentionally want a new model response.
+
+### Offline rendering
+
+Once a final plan exists, use:
+
+```bash
+--render-only --plan path/to/plan.json
+```
+
+No OpenAI API request is made in that workflow.
+
+## Correct A/V speed handling
+
+Montage beats may use a small speed value between `1.0` and `1.18`.
+
+The renderer applies matching transformations to both streams:
+
+```text
+video → setpts=(PTS-STARTPTS)/speed
+audio → atempo=speed
+```
+
+The generated sidecar SRT uses the same `unit.duration / speed` timing, and the final file duration is checked with `ffprobe` after rendering.
+
+## Natural clip boundaries
+
+Continuous-mode LLM timestamps are treated as editorial suggestions, not trusted frame cuts.
+
+Before rendering, the validator:
+
+1. searches nearby subtitle cue starts;
+2. searches real subtitle cue ends;
+3. finds a pair that satisfies the requested duration range;
+4. rejects candidates that cannot be fitted naturally;
+5. removes excessive overlap;
+6. clamps editorial scores to valid ranges.
+
+This avoids cutting a sentence merely to force an exact duration.
+
+## Text overlays and fonts
+
+Text is rendered to transparent PNG files with Pillow and composited by ffmpeg. This avoids depending on ffmpeg `drawtext` or ASS/libass for the core hook/CTA workflow and is more predictable across Windows installations.
+
+The default font resolver tries common Arial, Segoe UI, DejaVu Sans, and Noto font paths. For Arabic, Chinese, Hindi, or other scripts, you may get better results by supplying a suitable local font:
+
+```bash
+--font-path /path/to/NotoSans.ttf
+```
+
+## Architecture
+
+```text
+freedom_clips/
+├── models.py              # Cue and Unit dataclasses
+├── srt.py                 # SRT parsing, alignment and safe time formatting
+├── llm.py                 # OpenAI Responses API + strict JSON + retry/fallback
+├── plan_cache.py          # deterministic plan cache
+├── text_overlay.py        # Pillow text rendering
+├── ffmpeg.py              # ffmpeg/ffprobe commands and rendering
+├── validation.py          # boundary, overlap and montage validation
+└── prompts/
+    ├── opusclip.py        # generic continuous-clip prompt/schema
+    └── montage.py         # original-footage montage prompt/schema
+```
+
+The two top-level scripts are intentionally thin workflow/CLI entry points.
+
+## Run tests
+
+```bash
+pytest -q
+```
+
+Tests do not call paid APIs.
+
+The suite covers:
+
+- SRT parsing and Unicode;
+- timestamp rounding around second/minute boundaries;
+- generic prompt regression checks;
+- no generated-art API regression checks;
+- natural boundary fitting;
+- overlap rules;
+- montage plan validation;
+- plan-cache determinism;
+- an optional local ffmpeg A/V speed integration test.
+
+## Privacy and data flow
+
+Video rendering is local. The source video itself is not uploaded by these scripts.
+
+When planning a new set of clips, the transcript text or merged transcript units are sent to the configured OpenAI model. If that is not acceptable for a particular source, create a plan yourself and use `--render-only --plan ...`.
+
+## What this project is not
+
+Freedom Clips AI is not:
+
+- a web application;
+- a hosted SaaS;
+- a video transcription engine;
+- a face-tracking editor;
+- a voice-cloning system;
+- a generative-art pipeline;
+- a guarantee that a clip will become viral.
+
+It is a small, hackable clip-planning and local-rendering toolkit.
+
+## Suggested GitHub topics
+
+For discoverability, consider these repository topics:
+
+```text
+opusclip-alternative
+ai-video-editor
+shorts-generator
+podcast-to-shorts
+ffmpeg
+openai
+python
+instagram-reels
+tiktok-video
+youtube-shorts
+srt
+video-automation
+content-automation
+```
+
+## SEO / discovery phrases
+
+The repository directly addresses searches such as:
+
+- open source OpusClip alternative;
+- free OpusClip alternative Python;
+- podcast to YouTube Shorts generator;
+- AI video clip generator from SRT;
+- ffmpeg Shorts generator;
+- OpenAI video clipping Python;
+- automatic Reels generator;
+- TikTok clip generator from podcast;
+- multilingual Shorts generator;
+- AI podcast clipper open source;
+- long video to short clips Python;
+- agentic video editing workflow.
+
+These phrases describe actual project capabilities rather than separate landing-page claims.
+
+## Dubbing, translation and transcription tools
+
+These standalone scripts predate the 0.2.0 refactor. They work, but they do not use the shared `freedom_clips/` package yet.
+
+| Script | What it does |
+|---|---|
+| `realtime_dub_mp4.py` | Dubs an MP4 into other languages using OpenAI Realtime Translation. This is translation, not voice cloning. |
+| `transcribe_ru_diarized_srt_openai.py` | Video/audio → diarized SRT using OpenAI transcription. |
+| `tretyakov_translate_tts_kdenlive.py` | SRT → translated SRT → per-cue TTS → Kdenlive-ready dub assets. |
+| `build_exact_dub_mp3_from_manifest.py` | Assembles one timeline-exact dub MP3 from a TTS manifest. |
+
+Examples:
 
 ```bash
 python realtime_dub_mp4.py input.mp4 --languages spanish
+python realtime_dub_mp4.py input.mp4 --languages arabic hindi --sleep-factor 1.0
+python transcribe_ru_diarized_srt_openai.py --input talk.mp4 --outdir talk_asr --language ru
 ```
 
-Arabic and Hindi:
+Run each script with `--help` to see all of its options. `realtime_dub_mp4.py` needs `websocket-client`, which is included in `requirements.txt`.
+
+### Generating an SRT first
+
+If you have no transcript yet, `run_ai_opusclip_simple.py` transcribes the video with Whisper, reuses an existing usable SRT, runs `ai_opusclip.py`, and can burn subtitles into the rendered clips:
 
 ```bash
-python realtime_dub_mp4.py input.mp4 --languages arabic hindi
+python run_ai_opusclip_simple.py --video talk.mp4 --language en
 ```
 
-Faster testing:
+## Development notes
 
-```bash
-python realtime_dub_mp4.py input.mp4 --languages spanish --sleep-factor 0.25
-```
+Read [`AGENTS.md`](AGENTS.md) before making automated refactors. The design priorities are:
 
-Safe realtime mode:
+1. keep paid API usage explicit and cacheable;
+2. never introduce generated-art calls into montage rendering;
+3. preserve A/V timing correctness;
+4. keep prompts topic- and language-neutral by default;
+5. prefer small modules over framework complexity;
+6. keep render-only mode independent from the OpenAI API.
 
-```bash
-python realtime_dub_mp4.py input.mp4 --languages spanish --sleep-factor 1.0
-```
+## Version
 
----
+This package is the refactored **0.2.0** implementation derived from the project code-review specification in [`docs/CODE_REVIEW_SPEC.md`](docs/CODE_REVIEW_SPEC.md).
 
-## Layout modes
-
-### `crop`
-
-Creates a true 9:16 vertical center crop:
-
-```text
-1080x1920
-```
-
-Best for centered speaker videos.
-
-### `blur`
-
-Creates a blurred background and keeps the whole original frame visible.
-
-Use this when:
-
-- the video has hardcoded subtitles
-- the speaker is not centered
-- center crop cuts important visual information
-
----
-
-## Output files
-
-Normal clips:
-
-```text
-clips_durov/
-  final_clip_plan.csv
-  final_clip_plan.json
-  raw_openai_plan.json
-  transcript_for_gpt.txt
-  01_94_Title/
-    01_94_Title.mp4
-    hook.ass
-    metadata.json
-```
-
-Montage clips:
-
-```text
-montage_durov/
-  final_montage_plan.csv
-  final_montage_plan.json
-  raw_montage_plan.json
-  transcript_for_gpt.txt
-  montage_01_95_Title/
-    seg_01.mp4
-    seg_02.mp4
-    seg_03.mp4
-    montage_01_95_Title.mp4
-    metadata.json
-```
-
-Dubbing:
-
-```text
-input_dub_arabic.mp4
-input_dub_hindi.mp4
-input_dub_chinese.mp4
-input_dub_french.mp4
-input_dub_spanish.mp4
-```
-
----
-
-## Notes on Hindi support
-
-This MVP was built specifically because Hindi workflows are often weaker in short-form AI clipping tools.
-
-Hindi is used in three ways:
-
-1. the original speech may be Hindi
-2. `hi.srt` can be included in the GPT prompt
-3. generated hooks can be written in Hindi / Devanagari
-
-The scripts assume you already have SRT files. You can create them with:
-
-- pyVideoTrans
-- Whisper
-- OpenAI transcription
-- faster-whisper
-- any subtitle editor
-
----
-
-## Cost philosophy
-
-This project is designed to reduce cost by avoiding minute-based creator SaaS billing.
-
-Instead of uploading everything to a closed SaaS platform, you run local ffmpeg and pay only for OpenAI API calls.
-
-The actual cost depends on:
-
-- model
-- transcript length
-- number of languages
-- realtime audio duration
-- your OpenAI pricing tier
-
-Always test with a 10–60 second clip before processing a 30-minute video.
-
----
-
-## Limitations
-
-- No face tracking yet
-- No automatic silence removal yet
-- No browser UI yet
-- No direct voice cloning in the bundled scripts
-- Realtime dubbing is not voice cloning
-- Montage clips may need human editorial review
-- The OpenAI-selected moments depend heavily on SRT quality
-- Hardcoded subtitles cannot be moved unless you regenerate the video from clean source
-
----
-
-## Roadmap ideas
-
-- Face tracking with OpenCV
-- Whisper fallback when SRT is missing
-- Hindi subtitle regeneration
-- Auto B-roll prompts
-- Auto thumbnail generation
-- Telegram bot approval flow
-- Web UI
-- Batch folder processing
-- SQLite project database
-- XTTS-v2 voice clone pipeline
-- pyVideoTrans integration
-- Upload-ready captions and hashtags
-- A/B testing of hooks
-
----
-
-## Disclaimer
-
-This project is independent and not affiliated with OpusClip, ElevenLabs, OpenAI, Telegram, or Pavel Durov.
-
-Use only videos and subtitles you have the right to process. Respect copyright, privacy and platform rules.
-
----
 ## About the author
 
-**Ivan Koroteev** is a software engineer, AI creator and public speaker from Moscow, with fundamental BMSTU engineer degree in Computer Systems and Software, working at the intersection of backend engineering, generative AI, media production and education.
+**Ivan Koroteev** is a software engineer, AI creator and public speaker from Moscow. He holds a BMSTU engineering degree in Computer Systems and Software and works across backend engineering, generative AI, media production and education. He also publishes AI-assisted music and media under the pseudonym **Aivan Karade**.
 
-He has 10+ years of experience in software development, including .NET backend systems, integrations, microservices, document recognition, AI-assisted workflows and automation. He has also spoken at TEDx, taught programming and AI, and built practical tools for creators, educators and independent media.
+## Migrating from 0.1.x
 
-Ivan Koroteev also publishes creative and musical experiments under the pseudonym **Aivan Karade** — a name used for AI-assisted music, storytelling, visual media and poetic technology projects. He gained 300k+ listens in Hindi music.
-
-This project reflects his larger mission: to make AI tools more open, practical and empowering for independent creators — especially in multilingual contexts such as Hindi, English, Arabic, Chinese, French and Spanish.
----
+- `ai_opusclip.py --en X --hi Y` is now `--srt X --secondary-srt Y`. The secondary SRT is optional and can be in any language.
+- `noimg.py` and `ai_montage_clips.py` were removed. Use `ai_viral_montage_clips.py`, which renders original footage only. The old scripts remain in git history (tag `v0.1.0`).
+- Old JSON plans with language-specific fields (`title_en`, `hook_hi`, `caption_en`, `why_viral`) are not accepted by the 0.2.0 validators. Regenerate them, or run with `--refresh-plan`.
 
 ## License
 
-MIT License. See `LICENSE`.
-
----
-
-## Author note
-
-Created as a practical open-source experiment in digital freedom:
-
-> A creator should be able to analyze, cut, translate and publish their own ideas without being trapped by closed platforms or insane per-minute pricing.
-
-Fork it. Improve it. Make it useful.
-
-p.s. from author. i will definitely switch to .net 8 in next MVP ai projects. 
-python is:
-import yaml
-pip says installed
-wrong interpreter
-wrong venv
-wrong package name
-wrong PATH
-VS Code uses another Python
-terminal uses another Python
-kill me!!!
-
-With C# / .NET you get:
-wrong type? build error, fix
-missing package? build error, fix
-bad namespace? build error, fix
-wrong method signature? build error, fix
-EF model mismatch? usually visible fast
+MIT. See [`LICENSE`](LICENSE).

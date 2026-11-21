@@ -1,0 +1,22 @@
+{
+  "global_theme": "Local-first clip automation",
+  "clips": [
+    {
+      "clip_id": 1,
+      "title": "Plan locally, render cheaply",
+      "why_selected": "Three source moments form a compact workflow explanation.",
+      "viral_score": 84,
+      "integrity_risk": 3,
+      "hook": {
+        "display_seconds": 2.0,
+        "text": "Your clip pipeline does not need to be expensive"
+      },
+      "beats": [
+        {"unit_id": 0, "effect": "punch_in", "speed": 1.0, "overlay": "Start with the transcript", "reason": "Clear opening"},
+        {"unit_id": 1, "effect": "none", "speed": 1.0, "overlay": "Separate plan from render", "reason": "Core architecture"},
+        {"unit_id": 2, "effect": "contrast_boost", "speed": 1.0, "overlay": "Reuse the plan", "reason": "Cost payoff"}
+      ],
+      "cta_question": "Would you use this instead of a clipping SaaS?"
+    }
+  ]
+}
