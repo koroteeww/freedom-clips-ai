@@ -52,6 +52,9 @@ def build_parser() -> argparse.ArgumentParser:
                         "audio: only speed up the dub; video: only slow the video; none: trim overflow")
     p.add_argument("--max-audio-speed", type=float, default=1.35, help="Max dub speed-up factor (default 1.35)")
     p.add_argument("--max-video-slowdown", type=float, default=1.6, help="Max video slow-down factor (default 1.6)")
+    p.add_argument("--max-line-delay", type=float, default=1.0,
+                   help="If a dub cannot fit even at the speed limits, start the next line up to this "
+                        "many seconds later instead of trimming words (default 1.0, 0 disables)")
     p.add_argument("--no-use-gaps", action="store_true",
                    help="Do not let a dub run into the pause before the next line")
     p.add_argument("--background", default="none",
@@ -97,6 +100,7 @@ def main(argv: list[str] | None = None) -> int:
         max_audio_tempo=args.max_audio_speed,
         max_video_slowdown=args.max_video_slowdown,
         use_gaps=not args.no_use_gaps,
+        max_line_delay=args.max_line_delay,
     )
     out = args.out or args.video.with_name(f"{args.video.stem}_dubbed.mp4")
     print(json.dumps(plan.summary(), indent=2), flush=True)

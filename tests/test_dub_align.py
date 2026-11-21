@@ -207,3 +207,38 @@ def test_audio_only_mode_copies_video_and_keeps_length(tmp_path: Path):
     source = _stream_durations(video)
     assert abs(durations["video"] - source["video"]) < 0.01
     assert abs(durations["audio"] - durations["video"]) < 0.06
+
+
+def test_manifest_reader_finds_audio_after_project_folder_moved(tmp_path: Path):
+    audio = tmp_path / "eng2" / "audio_raw" / "0001_A.mp3"
+    audio.parent.mkdir(parents=True)
+    audio.write_bytes(b"")
+    manifest = tmp_path / "eng2" / "tts_manifest.json"
+    stale = r"D:\GLOBAL_old_drive\_project\eng2\audio_raw\0001_A.mp3"
+    manifest.write_text(
+        json.dumps([{"index": 1, "start": 0.5, "end": 2.0, "raw_mp3": stale, "raw_duration": 1.0}]),
+        encoding="utf-8",
+    )
+    [item] = lines_from_manifest(manifest, probe=False)
+    assert item.audio == audio.resolve()
+
+
+def test_line_that_cannot_fit_borrows_time_from_next_line_instead_of_trimming():
+    # 0.3 s slot, 2.0 s dub: even x1.35 audio and x1.6 video only give 0.65 s.
+    lines = [line(1, 0.0, 0.3, 2.0), line(2, 0.3, 5.0, 1.0), line(3, 6.0, 7.0, 0.5)]
+    plan = plan_alignment(lines, 8.0, max_line_delay=1.0)
+    first, second, _ = line_slots(plan)
+    assert first.overflow == 0
+    assert second.src_start == pytest.approx(0.3 + (2.0 / (1.35 * 1.6) - 0.3))
+    assert second.delay == pytest.approx(second.src_start - 0.3)
+    assert plan.summary()["lines_delayed"] == 1
+    assert sum(s.src_duration for s in plan.slots) == pytest.approx(8.0)
+
+
+def test_line_delay_is_capped_and_disabled_with_zero():
+    lines = [line(1, 0.0, 0.3, 6.0), line(2, 0.3, 5.0, 1.0)]
+    capped = plan_alignment(lines, 8.0, max_line_delay=0.5)
+    assert line_slots(capped)[1].delay == pytest.approx(0.5)
+    assert line_slots(capped)[0].overflow > 0
+    off = plan_alignment(lines, 8.0, max_line_delay=0)
+    assert line_slots(off)[1].delay == 0

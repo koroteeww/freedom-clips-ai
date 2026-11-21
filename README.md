@@ -564,11 +564,15 @@ Translated speech rarely matches the original length. `dub_align_video.py` place
 1. **Use the pause first.** A line may run into the silence before the next line.
 2. **Then share the overrun** between speeding the dub up (`atempo`, default max ×1.35) and slowing that video slice down (`setpts`, default max ×1.6). `--mode audio`, `--mode video` or `--mode none` use only one strategy, or none.
 3. **Render, measure, then cut the audio.** Each video slice is rendered first and its real length measured with ffprobe. The audio is then cut to that exact number of samples, so small ffmpeg errors never add up. A 3-minute test with 60 lines and 89 slices ends with less than 1 ms difference between the audio and video tracks.
-4. **Short dubs are padded with silence, never stretched.** Anything that still doesn't fit within the limits is trimmed with a short fade and listed in the report.
+4. **If a line still doesn't fit at the speed limits, the next line starts slightly later** (`--max-line-delay`, default 1.0 s). This is usually enough for short interjections that translate into long phrases.
+5. **Short dubs are padded with silence, never stretched.** Anything that still doesn't fit is trimmed with a short fade and listed in the report.
+
+On a real 5-minute Russian→English lecture (44 lines): 27 lines were sped up and slowed, 9 started up to 0.86 s late, and 2 lost 0.6 s in total. Both output tracks are 317.320 s long. Rendering 720p took under 2 minutes.
 
 ```bash
 # tts_manifest.json from tretyakov_translate_tts_kdenlive.py works as is
 python dub_align_video.py --video talk.mp4 --manifest talk_dub/tts_manifest.json
+# (if you moved the project folder, audio paths are found again relative to the manifest)
 
 # or: original SRT + one file per cue (0001_*.mp3, 0002_*.mp3, ...) + translated SRT for subtitles
 python dub_align_video.py --video talk.mp4 --srt talk.srt --dub-dir tts/ --text-srt talk.en.srt

@@ -67,6 +67,11 @@ class Slot:
         return self.src_duration * self.video_factor
 
     @property
+    def delay(self) -> float:
+        """How much later than the original line this dub starts (source seconds)."""
+        return max(0.0, self.src_start - self.line.start) if self.line is not None else 0.0
+
+    @property
     def dub_out_duration(self) -> float:
         if self.line is None:
             return 0.0
@@ -117,6 +122,8 @@ class AlignmentPlan:
             "output_duration": round(self.total_out, 3),
             "lines_sped_up": sum(1 for s in slots if s.audio_tempo > 1.0 + EPS),
             "lines_video_slowed": sum(1 for s in slots if s.video_factor > 1.0 + EPS),
+            "lines_delayed": sum(1 for s in slots if s.delay > EPS),
+            "max_delay_used": round(max((s.delay for s in slots), default=0.0), 3),
             "lines_trimmed": sum(1 for s in slots if s.overflow > EPS),
             "seconds_trimmed": round(sum(s.overflow for s in slots), 3),
             "max_audio_tempo_used": round(max((s.audio_tempo for s in slots), default=1.0), 4),
@@ -132,6 +139,7 @@ class AlignmentPlan:
                 "video_factor": round(slot.video_factor, 4),
                 "audio_tempo": round(slot.audio_tempo, 4),
                 "overflow": round(slot.overflow, 3),
+                "delay": round(slot.delay, 3),
             }
             if slot.line is not None:
                 data.update(
@@ -191,8 +199,13 @@ def plan_alignment(
     max_audio_tempo: float = 1.35,
     max_video_slowdown: float = 1.6,
     use_gaps: bool = True,
+    max_line_delay: float = 1.0,
 ) -> AlignmentPlan:
-    """Build an alignment plan. Pure function: no ffmpeg, no files touched."""
+    """Build an alignment plan. Pure function: no ffmpeg, no files touched.
+
+    ``max_line_delay`` lets a line that cannot fit even at the speed limits
+    push the start of the next line later by up to that many seconds.
+    """
     if mode not in MODES:
         raise ValueError(f"mode must be one of {MODES}, got {mode!r}")
     if max_audio_tempo < 1.0 or max_video_slowdown < 1.0:
@@ -214,10 +227,16 @@ def plan_alignment(
             continue
         kept.append(line)
 
+    capacity = {
+        "both": max_audio_tempo * max_video_slowdown,
+        "audio": max_audio_tempo,
+        "video": max_video_slowdown,
+        "none": 1.0,
+    }[mode]
     slots: list[Slot] = []
     cursor = 0.0
     for i, line in enumerate(kept):
-        start = max(0.0, line.start)
+        start = max(0.0, line.start, cursor)  # cursor > line.start when the previous line borrowed time
         if start > cursor + EPS:
             slots.append(Slot(cursor, start, None))
         next_start = kept[i + 1].start if i + 1 < len(kept) else total_duration
@@ -226,6 +245,15 @@ def plan_alignment(
         else:
             end = min(max(line.end, start + MIN_SLOT_SEC), next_start)
         available = end - start
+        # Even at the speed limits the dub will not fit: start the next line a little
+        # later (bounded by max_line_delay) instead of cutting words off.
+        required = line.dub_duration / capacity
+        if use_gaps and max_line_delay > 0 and i + 1 < len(kept) and required > available + EPS:
+            following = kept[i + 2].start if i + 2 < len(kept) else total_duration
+            room = max(0.0, following - next_start - MIN_SLOT_SEC)
+            borrow = min(required - available, max_line_delay, room)
+            end += borrow
+            available += borrow
         factor, tempo, overflow = _fit_line(available, line.dub_duration, mode, max_audio_tempo, max_video_slowdown)
         if overflow > EPS:
             warnings.append(
@@ -495,6 +523,25 @@ def write_timeline_srt(timeline: Sequence[dict], out_path: Path) -> None:
     out_path.write_text("\n".join(blocks), encoding="utf-8")
 
 
+def _resolve_manifest_audio(manifest: Path, value: str) -> Path:
+    """Resolve an audio path, surviving a project folder that was moved.
+
+    Absolute Windows paths written on another drive (``D:\\old\\eng2\\audio_raw\\x.mp3``)
+    are retried relative to the manifest: ``<manifest dir>/audio_raw/x.mp3``,
+    then ``<manifest dir>/x.mp3``.
+    """
+    raw = Path(value)
+    candidate = raw if raw.is_absolute() else manifest.parent / raw
+    if candidate.exists():
+        return candidate.resolve()
+    parts = [p for p in value.replace("\\", "/").split("/") if p]
+    for keep in range(min(len(parts), 3), 0, -1):
+        moved = manifest.parent.joinpath(*parts[-keep:])
+        if moved.exists():
+            return moved.resolve()
+    return candidate
+
+
 def lines_from_manifest(path: Path, *, probe: bool = True) -> list[DubLine]:
     """Read a dub manifest.
 
@@ -508,9 +555,7 @@ def lines_from_manifest(path: Path, *, probe: bool = True) -> list[DubLine]:
     lines: list[DubLine] = []
     for n, row in enumerate(rows, 1):
         audio_value = row.get("audio") or row.get("raw_mp3") or row.get("timed_mp3")
-        audio = Path(audio_value) if audio_value else None
-        if audio is not None and not audio.is_absolute():
-            audio = (path.parent / audio).resolve()
+        audio = _resolve_manifest_audio(path, audio_value) if audio_value else None
         if audio is not None and not audio.exists():
             raise FileNotFoundError(f"Dub audio not found for line {row.get('index', n)}: {audio}")
         duration = row.get("dub_duration") or row.get("raw_duration")
