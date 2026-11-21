@@ -4,6 +4,7 @@ Freedom Clips AI is an open-source Python toolkit for turning long videos plus S
 
 Canonical capabilities:
 - Continuous OpusClip-like clipping: ai_opusclip.py
+- Dub-to-video timing alignment (drift-free): dub_align_video.py / freedom_clips/dub_align.py
 - Multi-segment original-footage montage clipping: ai_viral_montage_clips.py
 - Topic-agnostic and language-agnostic prompt defaults
 - OpenAI Responses API for clip planning
